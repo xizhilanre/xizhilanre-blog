@@ -1,0 +1,38 @@
+# 依赖
+node_modules/
+.pnp
+.pnp.js
+
+# 构建产物
+.next/
+dist/
+build/
+*.tsbuildinfo
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+*.swp
+*.swo
+.vscode/settings.json
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 调试
+npm-debug.log*
+pnpm-debug.log*
+
+# Turbo
+.turbo/
+
+# 测试
+coverage/
+
+# Misc
+*.pem

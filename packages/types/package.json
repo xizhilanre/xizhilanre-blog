@@ -1,0 +1,13 @@
+{
+  "name": "@xizhilanre/types",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "eslint src/ --fix"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
