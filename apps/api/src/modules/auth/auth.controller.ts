@@ -1,20 +1,11 @@
 import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto } from './auth.dto';
+import { LoginDto } from './auth.dto';
 import { JwtAuthGuard } from '../../common/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
-  @Post('register')
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto).then((data) => ({
-      success: true,
-      data,
-      message: '注册成功',
-    }));
-  }
 
   @Post('login')
   login(@Body() dto: LoginDto) {

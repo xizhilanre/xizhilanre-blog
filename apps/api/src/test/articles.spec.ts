@@ -1,21 +1,37 @@
 import * as request from 'supertest';
+import * as bcrypt from 'bcryptjs';
 import { INestApplication } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { createTestApp, clearData, articleDocs, userDocs } from './test-utils';
 
 describe('Articles API', () => {
   let app: INestApplication;
+  let jwtService: JwtService;
+  let token: string;
 
   beforeAll(async () => {
     const result = await createTestApp();
     app = result.app;
+    jwtService = result.jwtService;
   });
 
   afterAll(async () => {
     await app.close();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     clearData();
+
+    // Seed admin user and generate JWT directly
+    const hash = await bcrypt.hash('pass123', 10);
+    userDocs.set('author1', {
+      _id: 'author1',
+      username: 'admin',
+      email: 'admin@blog.local',
+      passwordHash: hash,
+      role: 'admin',
+    });
+    token = jwtService.sign({ sub: 'author1', email: 'admin@blog.local' });
   });
 
   // ─── GET /api/articles ──────────────────────────────────
@@ -32,15 +48,6 @@ describe('Articles API', () => {
     });
 
     it('should return published articles only', async () => {
-      const authorId = 'user1';
-      userDocs.set(authorId, {
-        _id: authorId,
-        username: 'tester',
-        email: 'tester@example.com',
-        passwordHash: 'hash',
-        role: 'user',
-      });
-
       for (let i = 1; i <= 5; i++) {
         articleDocs.set(`art${i}`, {
           _id: `art${i}`,
@@ -48,7 +55,7 @@ describe('Articles API', () => {
           content: `Content ${i}`,
           tags: ['tech'],
           published: true,
-          author: authorId,
+          author: 'author1',
           viewCount: i * 10,
           likeCount: i,
         });
@@ -59,7 +66,7 @@ describe('Articles API', () => {
         content: 'draft content',
         tags: [],
         published: false,
-        author: authorId,
+        author: 'author1',
         viewCount: 0,
         likeCount: 0,
       });
@@ -74,15 +81,6 @@ describe('Articles API', () => {
     });
 
     it('should paginate with page and limit params', async () => {
-      const authorId = 'user1';
-      userDocs.set(authorId, {
-        _id: authorId,
-        username: 'tester',
-        email: 'tester@example.com',
-        passwordHash: 'hash',
-        role: 'user',
-      });
-
       for (let i = 1; i <= 10; i++) {
         articleDocs.set(`art${i}`, {
           _id: `art${i}`,
@@ -90,7 +88,7 @@ describe('Articles API', () => {
           content: `Content ${i}`,
           tags: ['tech'],
           published: true,
-          author: authorId,
+          author: 'author1',
           viewCount: i,
           likeCount: i,
         });
@@ -121,13 +119,6 @@ describe('Articles API', () => {
     });
 
     it('should create article with valid JWT', async () => {
-      const reg = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ username: 'author1', email: 'author1@example.com', password: 'pass123' })
-        .expect(201);
-
-      const token = reg.body.data.token;
-
       const res = await request(app.getHttpServer())
         .post('/api/articles')
         .set('Authorization', `Bearer ${token}`)

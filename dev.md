@@ -28,7 +28,6 @@ pnpm dev          # Turborepo 并行启动 web + api
   可用端点：
   - `GET /api` — API 基本信息
   - `GET /api/health` — 健康检查
-  - `POST /api/auth/register` — 注册
   - `POST /api/auth/login` — 登录
   - `GET /api/auth/profile` — 当前用户信息（需 JWT）
   - `GET /api/articles` — 文章列表（分页 + 标签筛选 + 搜索）
@@ -198,7 +197,7 @@ xizhilanre-blog/
 │       │       ├── users/        # 用户模块（Schema + CRUD + 收藏）
 │       │       ├── articles/     # 文章模块（Schema + CRUD + 点赞 + 分页搜索）
 │       │       ├── projects/     # 作品模块（Schema + CRUD + 技术栈筛选）
-│       │       ├── auth/         # 认证模块（注册/登录 JWT + bcrypt）
+│       │       ├── auth/         # 认证模块（登录 JWT + bcrypt，仅管理员）
 │       │       └── agent/        # AI Agent 模块
 │       ├── dist/             # 构建产物
 │       ├── jest.config.ts     # Jest 配置（ts-jest 转换 + 路径别名）
@@ -223,8 +222,7 @@ xizhilanre-blog/
 
 | 方法 | 路径 | 权限 | 说明 |
 |---|---|---|---|
-| POST | /api/auth/register | 公开 | 注册（username + email + password） |
-| POST | /api/auth/login | 公开 | 登录，返回 JWT token（7天有效） |
+| POST | /api/auth/login | 公开 | 登录，返回 JWT token（7天有效，仅管理员账号） |
 | GET | /api/auth/profile | JWT | 获取当前用户信息 |
 
 ### 文章模块 (articles)
@@ -305,8 +303,7 @@ pnpm --filter @xizhilanre/api test:cov
 
 ### 测试覆盖
 
-**Auth（8 个用例）**：
-- 注册成功、重复邮箱拒绝（4xx）、缺少字段拒绝（400）、密码过短拒绝（400）、邮箱格式错误拒绝（400）
+**Auth（3 个用例）**：
 - 登录成功（201）、密码错误拒绝（4xx）、不存在的邮箱拒绝（4xx）
 
 **Articles（5 个用例）**：
@@ -410,11 +407,6 @@ node apps/api/seed.mjs
 ### 测试 API（curl 示例）
 
 ```bash
-# 注册
-curl -X POST http://localhost:3001/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"test","email":"test@example.com","password":"123456"}'
-
 # 登录
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \

@@ -89,12 +89,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          还没有账号？{' '}
-          <Link href="/register" className="text-primary hover:underline">
-            立即注册
-          </Link>
-        </p>
       </div>
     </div>
   );

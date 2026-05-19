@@ -1,6 +1,7 @@
 import * as request from 'supertest';
+import * as bcrypt from 'bcryptjs';
 import { INestApplication } from '@nestjs/common';
-import { createTestApp, clearData } from './test-utils';
+import { createTestApp, clearData, userDocs } from './test-utils';
 
 describe('Auth API', () => {
   let app: INestApplication;
@@ -18,74 +19,24 @@ describe('Auth API', () => {
     clearData();
   });
 
-  // ─── Register ──────────────────────────────────────────
-
-  describe('POST /api/auth/register', () => {
-    it('should register a new user successfully', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ username: 'testuser', email: 'test@example.com', password: '123456' })
-        .expect(201);
-
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.token).toBeDefined();
-      expect(res.body.data.user.username).toBe('testuser');
-    });
-
-    it('should reject duplicate email', async () => {
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ username: 'user1', email: 'dup@example.com', password: '123456' })
-        .expect(201);
-
-      const res = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ username: 'user2', email: 'dup@example.com', password: '123456' });
-
-      expect(res.status).toBeGreaterThanOrEqual(400);
-    });
-
-    it('should reject missing email', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ username: 'test', password: '123456' })
-        .expect(400);
-
-      expect(res.body.message).toBeDefined();
-    });
-
-    it('should reject short password', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ username: 'test', email: 'short@example.com', password: '12' })
-        .expect(400);
-
-      expect(res.body.message).toBeDefined();
-    });
-
-    it('should reject invalid email format', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ username: 'test', email: 'not-an-email', password: '123456' })
-        .expect(400);
-
-      expect(res.body.message).toBeDefined();
-    });
-  });
-
   // ─── Login ──────────────────────────────────────────────
 
   describe('POST /api/auth/login', () => {
     beforeEach(async () => {
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send({ username: 'logintest', email: 'login@example.com', password: 'correct123' });
+      const hash = await bcrypt.hash('correct123', 10);
+      userDocs.set('user1', {
+        _id: 'user1',
+        username: 'admin',
+        email: 'admin@blog.local',
+        passwordHash: hash,
+        role: 'admin',
+      });
     });
 
     it('should login with correct credentials', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'login@example.com', password: 'correct123' })
+        .send({ email: 'admin@blog.local', password: 'correct123' })
         .expect(201);
 
       expect(res.body.success).toBe(true);
@@ -95,7 +46,7 @@ describe('Auth API', () => {
     it('should reject wrong password', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/auth/login')
-        .send({ email: 'login@example.com', password: 'wrongpass' });
+        .send({ email: 'admin@blog.local', password: 'wrongpass' });
 
       expect(res.status).toBeGreaterThanOrEqual(400);
     });
