@@ -1,0 +1,99 @@
+{
+  "articles": [
+    {
+      "title": "NestJS 微服务架构实践指南",
+      "summary": "深入探讨 NestJS 微服务架构的设计理念与实践方案，包括服务拆分、通信协议选择与代码示例。",
+      "tags": ["NestJS", "Node.js", "Backend"],
+      "published": true,
+      "content": "## 前言\n\nNestJS 是一个渐进式 Node.js 框架，它借鉴了 Angular 的模块化设计理念，为构建高效、可扩展的服务端应用提供了完整的解决方案。\n\n## 为什么选择 NestJS\n\n在 Node.js 生态中，Express 和 Koa 一直是主流的 HTTP 框架。但它们都有一个共同的问题——缺乏架构约束。随着项目规模的增长，代码组织变得越来越困难。\n\nNestJS 通过以下特性解决了这个问题：\n\n- **模块化设计**：每个功能领域封装为独立模块，通过依赖注入进行组合\n- **装饰器语法**：利用 TypeScript 装饰器声明路由、中间件、管道等\n- **开箱即用**：内置支持 GraphQL、WebSocket、微服务等多种传输层\n\n## 微服务架构实践\n\n### 服务拆分\n\n微服务的核心在于合理的服务拆分：\n\n- 用户服务 (User Service)  →  认证、授权、用户信息管理\n- 文章服务 (Post Service)  →  内容的 CRUD、搜索、推荐\n- 通知服务 (Notify Service) →  邮件、推送、站内信\n\n### 通信方式\n\nNestJS 支持多种微服务通信协议：\n\n- **TCP**：适合内部服务间同步调用\n- **Redis**：基于发布/订阅模式，适合事件驱动场景\n- **gRPC**：高性能二进制协议，适合跨语言通信\n- **Kafka**：高吞吐量消息队列，适合日志和流处理\n\n## 总结\n\nNestJS 为 Node.js 后端开发带来了久违的工程化体验。搭配 TypeScript 的类型安全，它让构建大型后端应用变得更加可控和愉悦。"
+    },
+    {
+      "title": "React 18 并发特性深度解析",
+      "summary": "深入剖析 React 18 并发渲染机制，包括可中断渲染、useTransition 与 Suspense 的进化及性能收益。",
+      "tags": ["React", "Frontend", "TypeScript"],
+      "published": true,
+      "content": "## 什么是并发 React\n\nReact 18 引入了并发渲染这一革命性特性。它允许 React 同时准备多个版本的 UI，并根据优先级决定渲染哪一个。\n\n## 核心概念\n\n### 可中断渲染\n\n在 React 18 之前，一旦开始渲染就不能中断。这意味着如果一个复杂的渲染阻塞了主线程，用户就会感受到卡顿。\n\n并发模式改变了这一点：\n\n1. React 开始渲染组件树\n2. 如果有一个更高优先级的更新（如用户输入），React 会暂停当前渲染\n3. 处理完高优先级更新后，再恢复之前的渲染\n\n### useTransition Hook\n\n```tsx\nfunction SearchPage() {\n  const [query, setQuery] = useState('');\n  const [isPending, startTransition] = useTransition();\n\n  const handleChange = (e) => {\n    startTransition(() => {\n      setQuery(e.target.value);\n    });\n  };\n\n  return (\n    <>\n      <input onChange={handleChange} />\n      {isPending ? <Spinner /> : <Results query={query} />}\n    </>\n  );\n}\n```\n\nuseTransition 将状态更新标记为过渡，React 会在后台处理这些更新而不阻塞用户交互。\n\n### Suspense 的进化\n\nReact 18 中 Suspense 不再仅仅用于代码分割，它成为了数据获取的一等公民：\n\n```tsx\n<Suspense fallback={<Skeleton />}>\n  <ArticleContent id={id} />\n</Suspense>\n```\n\n## 性能收益\n\n在实际项目中，并发特性带来的收益是显著的：\n\n- 首次交互时间（FID）改善约 30%\n- 大列表渲染的掉帧明显减少\n- 用户体验更加流畅\n\n## 迁移建议\n\n从 React 17 迁移到 18 相对平滑，大部分 API 保持兼容。建议按以下步骤进行：\n\n1. 升级 react 和 react-dom 到 v18\n2. 将 ReactDOM.render 替换为 createRoot\n3. 逐步引入并发特性\n\n## 结语\n\nReact 18 的并发特性标志着前端框架的一个重要里程碑。它不是一个新 API，而是一种新的思维方式——让 UI 响应用户，而不是等待代码执行完毕。"
+    },
+    {
+      "title": "TypeScript 高级类型体操指南",
+      "summary": "从条件类型到模板字面量类型，全面解析 TypeScript 高级类型系统的实战技巧与原理。",
+      "tags": ["TypeScript", "Frontend"],
+      "published": true,
+      "content": "## 前言\n\nTypeScript 的类型系统是图灵完备的。这意味着你可以在类型层面进行编程——这就是类型体操。虽然听起来像是炫技，但掌握这些技巧能让你写出更安全、更优雅的代码。\n\n## 条件类型\n\n条件类型是类型体操的基础：\n\n```typescript\ntype IsString<T> = T extends string ? true : false;\n\ntype A = IsString<'hello'>;  // true\ntype B = IsString<42>;       // false\n```\n\n## 映射类型\n\n映射类型让你可以遍历类型的属性并对其进行变换：\n\n```typescript\ntype MyReadonly<T> = {\n  readonly [K in keyof T]: T[K];\n};\n\ntype MyPartial<T> = {\n  [K in keyof T]?: T[K];\n};\n```\n\n## infer 关键字\n\ninfer 是条件类型中最强大的特性之一，它允许你在条件判断中声明和推断类型变量：\n\n```typescript\ntype MyReturnType<T> = T extends (...args: any[]) => infer R ? R : never;\n\ntype UnpackPromise<T> = T extends Promise<infer U> ? U : T;\n```\n\n## 模板字面量类型\n\nTypeScript 4.1 引入了模板字面量类型，让字符串操作进入了类型层面：\n\n```typescript\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype ClickEvent = EventName<'click'>;  // 'onClick'\n\ntype CSSProperty = 'margin' | 'padding';\ntype CSSDirection = 'Top' | 'Bottom' | 'Left' | 'Right';\ntype CSSKey = `${CSSProperty}${CSSDirection}`;\n```\n\n## 实战案例：深度 Partial\n\n```typescript\ntype DeepPartial<T> = {\n  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];\n};\n```\n\n## 总结\n\n类型体操不是必须的，但它能显著提升代码的类型安全性。建议从实际需求出发，逐步积累而不是一次性掌握全部技巧。"
+    },
+    {
+      "title": "前端性能优化实战：从 Lighthouse 60 到 95",
+      "summary": "记录一个电商页面从 Lighthouse 62 分到 95 分的完整优化过程，涵盖图片、JS、渲染三大方向。",
+      "tags": ["Frontend", "CSS", "React"],
+      "published": true,
+      "content": "## 起点\n\n一个电商页面的 Lighthouse 评分只有 62 分。用户在 3G 网络下需要等待 8 秒才能看到页面内容。这篇文章记录了我们将评分提升到 95 分的完整过程。\n\n## 第一阶段：图片优化\n\n图片占据了页面 80% 的带宽。\n\n### WebP 格式\n\n将所有图片转换为 WebP 格式，体积平均减少 40%。\n\n```html\n<picture>\n  <source srcset=\"hero.webp\" type=\"image/webp\">\n  <img src=\"hero.jpg\" alt=\"Hero\" loading=\"lazy\">\n</picture>\n```\n\n### 响应式图片\n\n使用 srcset 为不同设备提供合适尺寸的图片。\n\n### 懒加载\n\n对首屏之外的图片使用 loading=lazy，配合 Intersection Observer 实现更精细的控制。\n\n## 第二阶段：JavaScript 优化\n\n### Code Splitting\n\n使用动态 import() 进行路由级别的代码分割。\n\n### Tree Shaking\n\n确保第三方库支持 tree shaking。将 lodash 替换为 lodash-es，bundle 体积减少了 50KB。\n\n### 预加载关键资源\n\n```html\n<link rel=\"preload\" href=\"critical.css\" as=\"style\">\n<link rel=\"preconnect\" href=\"https://api.example.com\">\n```\n\n## 第三阶段：渲染优化\n\n### CSS Containment\n\n使用 contain 属性限制浏览器的重排范围：\n\n```css\n.product-list {\n  contain: layout style paint;\n}\n```\n\n### 虚拟滚动\n\n对于长列表，使用虚拟滚动只渲染可视区域内的元素。\n\n## 最终成果\n\n| 指标 | 优化前 | 优化后 | 提升 |\n|---|---|---|---|\n| FCP | 3.8s | 1.2s | 68% |\n| LCP | 8.2s | 2.1s | 74% |\n| TTI | 6.5s | 2.8s | 57% |\n| Lighthouse | 62 | 95 | +33 |\n\n## 总结\n\n性能优化是一个持续的过程。关键原则是：先测量，再优化，最后验证。不要凭直觉猜测瓶颈在哪里。"
+    },
+    {
+      "title": "春江花月夜——唐诗中的宇宙意识",
+      "summary": "赏析张若虚《春江花月夜》的艺术境界与哲学思考，跨越千年与程序员的深夜共鸣。",
+      "tags": ["文学", "诗词"],
+      "published": true,
+      "content": "## 原文\n\n> 春江潮水连海平，海上明月共潮生。\n> 滟滟随波千万里，何处春江无月明！\n> 江流宛转绕芳甸，月照花林皆似霰。\n> 空里流霜不觉飞，汀上白沙看不见。\n> 江天一色无纤尘，皎皎空中孤月轮。\n> 江畔何人初见月？江月何年初照人？\n> 人生代代无穷已，江月年年望相似。\n> 不知江月待何人，但见长江送流水。\n\n## 赏析\n\n张若虚的《春江花月夜》被闻一多先生誉为\"诗中的诗，顶峰上的顶峰\"。这首诗以春、江、花、月、夜五个意象为经纬，编织出一幅宏大的时空画卷。\n\n### 时空交织的意境\n\n诗的开篇以铺陈手法描绘春江月夜的壮丽景色。\"春江潮水连海平\"一句，将江水与海水相连，创造出无边的空间感。而\"海上明月共潮生\"则在空间之外加入了时间的维度——月亮随着潮水一同升起，暗示着宇宙运行的永恒节律。\n\n### 哲学追问\n\n\"江畔何人初见月？江月何年初照人？\"这两句是全诗的诗眼。诗人从眼前的景致突然转向形而上的追问：谁是第一个在江边见到月亮的人？月亮又是从何时开始照耀人间的？\n\n这两个问题没有答案，也不需要答案。它们将个人的存在置于宇宙的宏大背景之下，让人在刹那间感受到生命的短暂与宇宙的永恒。\n\n### 现代启示\n\n当我们作为程序员，在深夜写代码时抬头望向窗外的月光，或许也能体会到千年前诗人的心境。技术日新月异，但人类对美和真理的追求从未改变。代码和诗歌一样，都是在混沌中寻找秩序，在有限中触摸无限。\n\n## 诗中名句\n\n- \"春江潮水连海平，海上明月共潮生\" — 开篇即为千古名句\n- \"江畔何人初见月？江月何年初照人？\" — 哲学的终极追问\n- \"人生代代无穷已，江月年年望相似\" — 生命的短暂与宇宙的永恒"
+    },
+    {
+      "title": "Next.js App Router 完全指南",
+      "summary": "全面解析 Next.js App Router 的核心概念：Server Components、数据获取、流式渲染与缓存策略。",
+      "tags": ["Next.js", "React", "Frontend"],
+      "published": true,
+      "content": "## 什么是 App Router\n\nNext.js 13 引入的 App Router 是一个基于 React Server Components 的全新路由系统。它与传统的 Pages Router 有本质区别。\n\n## 核心概念\n\n### Server Components（默认）\n\n在 App Router 中，所有组件默认都是 Server Components：\n\n- 在服务端渲染，不会被发送到客户端\n- 可以直接访问数据库、文件系统等后端资源\n- 无法使用 useState、useEffect 等客户端 Hook\n\n```tsx\n// 这是一个 Server Component\nasync function ArticleList() {\n  const articles = await db.article.findMany();\n  return <ul>{articles.map(a => <li key={a.id}>{a.title}</li>)}</ul>;\n}\n```\n\n### Client Components\n\n当需要使用交互功能时，在文件顶部添加 'use client'：\n\n```tsx\n'use client';\n\nimport { useState } from 'react';\n\nexport function SearchBar() {\n  const [query, setQuery] = useState('');\n  return <input value={query} onChange={e => setQuery(e.target.value)} />;\n}\n```\n\n### Layout 嵌套\n\nApp Router 的 Layout 是嵌套的，父级 Layout 在子级路由切换时不会重新渲染。\n\n## 数据获取\n\n### 在 Server Component 中直接获取\n\n```tsx\nasync function Page() {\n  const data = await fetch('https://api.example.com/articles');\n  const articles = await data.json();\n  return <ArticleGrid articles={articles} />;\n}\n```\n\nNext.js 会自动缓存 fetch 请求，你也可以控制缓存策略：\n\n```tsx\n// 每次请求都重新获取\nfetch(url, { cache: 'no-store' });\n\n// 按时间重新验证\nfetch(url, { next: { revalidate: 60 } });\n```\n\n### Streaming\n\n使用 loading.tsx 和 Suspense 实现流式渲染。\n\n## 总结\n\nApp Router 代表着 React 全栈开发的未来方向。Server Components、Streaming、嵌套 Layout 这些特性让构建高性能 Web 应用变得更加简单。"
+    },
+    {
+      "title": "登高——杜甫的沉郁顿挫",
+      "summary": "品读杜甫《登高》\"古今七律第一\"的艺术成就，感受沉郁顿挫的诗史笔法。",
+      "tags": ["文学", "诗词"],
+      "published": true,
+      "content": "## 原文\n\n> 风急天高猿啸哀，渚清沙白鸟飞回。\n> 无边落木萧萧下，不尽长江滚滚来。\n> 万里悲秋常作客，百年多病独登台。\n> 艰难苦恨繁霜鬓，潦倒新停浊酒杯。\n\n## 赏析\n\n杜甫的《登高》被誉为\"古今七律第一\"，全诗八句皆对，气韵浑成，将个人的身世之感与天地自然的苍茫融为一体。\n\n### 写景——四联皆对\n\n首联\"风急天高猿啸哀，渚清沙白鸟飞回\"，以风急对渚清，天高对沙白，猿啸哀对鸟飞回，开篇即营造出一种肃杀悲凉的氛围。\n\n颔联\"无边落木萧萧下，不尽长江滚滚来\"是全诗最为人称道的名句。无边与不尽相对，落木与长江相映，萧萧下与滚滚来形成动态画面的强烈对比。这两句不仅写出了秋日的萧瑟，更暗示了时间的无情流逝。\n\n### 抒情——沉郁顿挫\n\n颈联转入抒情：\"万里悲秋常作客，百年多病独登台\"。诗人将空间（万里）与时间（百年）并置，悲秋之情与作客之苦交织，多病之身与孤独之感相融。\n\n尾联\"艰难苦恨繁霜鬓，潦倒新停浊酒杯\"以个人命运作结。繁霜鬓是岁月的痕迹，停酒杯是无奈的克制。诗人连借酒浇愁的权利都被剥夺了，悲苦之情达到顶点。\n\n### 技术视角的感悟\n\n杜甫的律诗如同精密的代码——每一个字都在它该在的位置上，承担着不可替代的功能。这种\"无一字无来处\"的严谨，正是工程师所追求的品质。\n\n当我们调试一段复杂的代码时，或许也能体会到杜甫\"语不惊人死不休\"的执着。无论是写诗还是写代码，对完美的追求是相通的。"
+    },
+    {
+      "title": "从零构建组件库：设计系统思考",
+      "summary": "团队从零构建 React 组件库的完整经验：设计原则、技术选型、可访问性与版本管理策略。",
+      "tags": ["React", "CSS", "Frontend"],
+      "published": true,
+      "content": "## 为什么要自建组件库\n\n每个成熟的前端团队最终都会面临一个选择：用现成的组件库还是自己造轮子。这篇文章分享我们团队从零构建组件库的经验。\n\n## 设计原则\n\n### 组合优于配置\n\n好的组件应该是可组合的，而不是通过一堆 props 来控制所有行为。\n\n### 关注点分离\n\n将组件的状态、行为和样式分离到独立的文件中。\n\n## 技术选型\n\n| 工具 | 用途 |\n|---|---|\n| Radix UI | 无样式基础组件（可访问性） |\n| TailwindCSS | 样式系统 |\n| CVA | 变体管理 |\n| Storybook | 文档与开发 |\n| Vitest | 单元测试 |\n\n## 可访问性\n\n可访问性不是可选的附加功能，而是组件库的基本要求：\n\n- 所有交互元素支持键盘导航\n- 使用 ARIA 属性描述组件状态\n- 保证足够的颜色对比度\n- 支持屏幕阅读器\n\n## 版本管理\n\n采用语义化版本控制：\n\n- **MAJOR**：不兼容的 API 变更\n- **MINOR**：向后兼容的新功能\n- **PATCH**：向后兼容的 Bug 修复\n\n## 总结\n\n自建组件库最大的收获不是代码本身，而是团队对设计一致性达成的共识。每一个组件的 API 设计、交互模式、视觉风格，都是团队设计哲学的具象化。"
+    }
+  ],
+  "projects": [
+    {
+      "title": "个人博客系统",
+      "description": "基于 Next.js 14 + NestJS 的全栈博客平台，采用 Apple-esque 简约设计风格，支持 Markdown 渲染、代码高亮、文章搜索与标签筛选。后端使用 MongoDB 存储，JWT 认证。",
+      "techStack": ["React", "Next.js", "NestJS", "TypeScript", "MongoDB"],
+      "projectLink": "https://github.com/xizhilanre/blog",
+      "featured": true
+    },
+    {
+      "title": "AI 智能助手",
+      "description": "基于 DeepSeek API 的智能对话助手，支持上下文理解、代码生成、文档摘要等多种能力。前端采用流式输出，体验流畅自然。",
+      "techStack": ["Python", "FastAPI", "OpenAI", "React"],
+      "demoLink": "https://ai.example.com",
+      "featured": true
+    },
+    {
+      "title": "电商微服务平台",
+      "description": "基于 NestJS 微服务架构的电商平台，包含用户服务、商品服务、订单服务和支付服务。使用 Redis 作为消息中间件，Docker Compose 一键部署。",
+      "techStack": ["NestJS", "Redis", "Docker", "PostgreSQL"],
+      "projectLink": "https://github.com/xizhilanre/ecommerce",
+      "featured": false
+    },
+    {
+      "title": "React 组件库 Aurora UI",
+      "description": "一套面向现代 Web 应用的 React 组件库，基于 Radix UI 和 TailwindCSS 构建。提供 30+ 高质量组件，每个组件都经过可访问性测试。",
+      "techStack": ["React", "TypeScript", "TailwindCSS", "Radix UI"],
+      "projectLink": "https://github.com/xizhilanre/aurora-ui",
+      "demoLink": "https://aurora-ui.example.com",
+      "featured": true
+    },
+    {
+      "title": "在线 Markdown 编辑器",
+      "description": "实时预览的 Markdown 编辑器，支持 GFM 语法、代码高亮、数学公式、Mermaid 图表。可导出为 PDF 和 HTML。",
+      "techStack": ["React", "TypeScript", "CodeMirror", "remark"],
+      "projectLink": "https://github.com/xizhilanre/markdown-editor",
+      "demoLink": "https://md.example.com",
+      "featured": false
+    }
+  ]
+}

@@ -22,6 +22,9 @@ export class Project {
 
   @Prop()
   demoLink?: string;
+
+  @Prop({ default: false })
+  featured: boolean;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

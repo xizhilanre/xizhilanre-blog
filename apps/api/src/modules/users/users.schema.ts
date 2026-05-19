@@ -22,6 +22,9 @@ export class User {
 
   @Prop({ type: [String], default: [] })
   favorites: string[];
+
+  @Prop({ default: 'user', enum: ['user', 'admin'] })
+  role: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

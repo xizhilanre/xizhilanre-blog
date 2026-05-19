@@ -2,50 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap');
+@import 'highlight.js/styles/github-dark.css';
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
-  }
+    --background: 220 13% 8%;
+    --foreground: 0 0% 92%;
+    --card: 220 13% 12%;
+    --card-foreground: 0 0% 92%;
+    --popover: 220 13% 10%;
+    --popover-foreground: 0 0% 92%;
+    --primary: 255 65% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 13% 16%;
+    --secondary-foreground: 0 0% 85%;
+    --muted: 220 13% 16%;
+    --muted-foreground: 220 8% 55%;
+    --accent: 255 65% 65%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 18%;
+    --input: 220 13% 16%;
+    --ring: 255 65% 65%;
+    --radius: 0.75rem;
 
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Inter', -apple-system, sans-serif;
   }
 }
 
@@ -53,7 +37,121 @@
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  html {
+    scroll-behavior: smooth;
   }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-background/60 backdrop-blur-xl border-b border-white/[0.06];
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-md border border-white/[0.06] rounded-2xl;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .glass-card:hover {
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .accent-gradient {
+    background: linear-gradient(135deg, hsl(255 65% 65%), hsl(280 65% 60%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .prose-custom {
+    @apply text-foreground/90 leading-relaxed;
+    max-width: 65ch;
+  }
+
+  .prose-custom h1, .prose-custom h2, .prose-custom h3 {
+    font-family: var(--font-serif);
+    @apply text-foreground font-semibold;
+  }
+
+  .prose-custom h2 {
+    @apply text-2xl mt-10 mb-4;
+  }
+
+  .prose-custom h3 {
+    @apply text-xl mt-8 mb-3;
+  }
+
+  .prose-custom p {
+    @apply my-4 leading-relaxed;
+  }
+
+  .prose-custom a {
+    @apply text-primary underline underline-offset-4 decoration-primary/30 hover:decoration-primary;
+  }
+
+  .prose-custom ul, .prose-custom ol {
+    @apply my-4 pl-6;
+  }
+
+  .prose-custom li {
+    @apply my-1;
+  }
+
+  .prose-custom blockquote {
+    @apply border-l-2 border-primary/40 pl-4 my-4 italic text-muted-foreground;
+  }
+
+  .prose-custom code {
+    @apply bg-secondary px-1.5 py-0.5 rounded text-sm font-mono text-primary/90;
+  }
+
+  .prose-custom pre {
+    @apply bg-card border border-border rounded-xl p-4 my-6 overflow-x-auto;
+  }
+
+  .prose-custom pre code {
+    @apply bg-transparent p-0 text-sm text-foreground/90;
+  }
+
+  .prose-custom img {
+    @apply rounded-xl my-6;
+  }
+
+  .prose-custom hr {
+    @apply border-border my-8;
+  }
+}
+
+/* Highlight.js theme overrides for dark background */
+.hljs {
+  background: transparent !important;
+  color: hsl(0 0% 85%) !important;
 }

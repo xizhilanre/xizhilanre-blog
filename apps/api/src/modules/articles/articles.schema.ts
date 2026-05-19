@@ -22,6 +22,12 @@ export class Article {
 
   @Prop({ default: false })
   published: boolean;
+
+  @Prop({ default: 0 })
+  viewCount: number;
+
+  @Prop({ default: 0 })
+  likeCount: number;
 }
 
 export const ArticleSchema = SchemaFactory.createForClass(Article);
