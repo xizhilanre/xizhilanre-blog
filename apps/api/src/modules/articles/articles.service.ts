@@ -20,8 +20,8 @@ export class ArticlesService {
     search?: string;
   }) {
     const { tag, search } = query;
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
+    const page = Number.isFinite(query.page) ? query.page! : 1;
+    const limit = Number.isFinite(query.limit) ? query.limit! : 10;
     const filter: FilterQuery<ArticleDocument> = { published: true };
 
     if (tag) {

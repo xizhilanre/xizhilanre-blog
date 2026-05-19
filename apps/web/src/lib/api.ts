@@ -121,6 +121,23 @@ export async function deleteProject(id: string) {
   return res.data;
 }
 
+// ---- Agent ----
+
+export async function agentSummarize(content: string) {
+  const res = await api.post('/agent/summarize', { content });
+  return res.data;
+}
+
+export async function agentRecommend(articleId: string, tags: string[]) {
+  const res = await api.post('/agent/recommend', { articleId, tags });
+  return res.data;
+}
+
+export async function agentWrite(title: string, keywords: string[], style?: string) {
+  const res = await api.post('/agent/write', { title, keywords, style });
+  return res.data;
+}
+
 // ---- Users ----
 
 export async function getUser(id: string) {

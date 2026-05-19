@@ -13,7 +13,10 @@ import { AgentModule } from './modules/agent/agent.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: path.resolve(__dirname, '../../../.env'),
+      envFilePath: process.env.NODE_ENV === 'production'
+        ? '.env'
+        : path.resolve(__dirname, '../../../.env'),
+      ignoreEnvFile: process.env.NODE_ENV === 'production',
       isGlobal: true,
     }),
     MongooseModule.forRootAsync({

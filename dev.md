@@ -46,18 +46,42 @@ pnpm dev          # Turborepo 并行启动 web + api
   - `PUT /api/users/profile` — 修改个人信息（需 JWT）
   - `POST /api/users/favorites/:articleId` — 收藏文章（需 JWT）
   - `DELETE /api/users/favorites/:articleId` — 取消收藏（需 JWT）
-  - `GET /api/agent` — AI Agent 模块（待实现）
+  - `POST /api/agent/summarize` — AI 文章摘要（需 JWT，限流 5次/分钟，有缓存）
+  - `POST /api/agent/recommend` — AI 文章推荐（需 JWT，限流）
+  - `POST /api/agent/write` — AI 文章大纲生成（需 JWT，限流）
 
 ### 前端页面路由
 
 | 路由 | 页面 | 状态 |
 |---|---|---|
-| `/` | 首页（Hero + 精选文章 + 最新文章无限滚动 + 精选项目展示） | 已完成 |
-| `/articles` | 文章列表（标签筛选 + 搜索 + 分页 + Bento Grid） | 已完成 |
-| `/articles/[id]` | 文章详情（Markdown 渲染 + TOC + 点赞 + AI 摘要骨架） | 已完成 |
-| `/projects` | 作品集（技术栈筛选 + 卡片网格 + macOS 风格 Modal） | 已完成 |
+| `/` | 首页（Hero + 精选文章 + 最新文章无限滚动 + 精选项目展示 + loading.tsx + error.tsx + not-found.tsx） | 已完成 |
+| `/articles` | 文章列表（标签筛选 + 搜索 + 分页 + Bento Grid + SWR 缓存 + 骨架屏 loading） | 已完成 |
+| `/articles/[id]` | 文章详情（Markdown 渲染 + TOC + 点赞 + AI 摘要 + 相关推荐） | 已完成 |
+| `/projects` | 作品集（技术栈筛选 + 卡片网格 + macOS 风格 Modal + next/image 优化 + 骨架屏 loading） | 已完成 |
 | `/about` | 关于我（技能图谱 + 时间轴 + 简历内嵌展示） | 已完成 |
-| `/login` | 登录页（毛玻璃表单 + JWT 存储） | 已完成 |
+| `/login` | 登录页（毛玻璃表单 + JWT 存储 → 跳转 /admin） | 已完成 |
+| `/admin` | 管理后台仪表盘（统计卡片 + 最近文章表格） | 已完成 |
+| `/admin/articles` | 文章管理（列表表格 + 发布/草稿切换 + 编辑/删除） | 已完成 |
+| `/admin/articles/new` | 新建文章（MD 分屏编辑器 + AI 大纲 + AI 摘要） | 已完成 |
+| `/admin/articles/[id]/edit` | 编辑文章（同上，加载已有数据） | 已完成 |
+| `/admin/projects` | 作品管理（列表 + 新建/编辑 Modal 表单） | 已完成 |
+
+### 管理后台
+
+路由前缀 `/admin`，通过 `middleware.ts` 检查 cookie 中的 JWT token 保护路由，未登录自动跳转 `/login`。
+
+**种子账号**：`seed@blog.local` / `seed123`（运行 `node apps/api/seed.mjs` 自动创建）
+
+**文章编辑器**使用 `@uiw/react-md-editor`，分屏实时预览 Markdown。提供两个 AI 写作助手：
+- **AI 大纲**：输入标题后点击按钮，调用 `/agent/write` 生成大纲并插入编辑器
+- **AI 摘要**：对当前内容调用 `/agent/summarize`，结果自动填入摘要字段
+- AI 功能失败时顶部显示警告条（不影响正常编辑），两个按钮独立 loading 互不阻塞
+
+### 前端 AI 功能
+
+**文章详情页**：
+- **AI 摘要**：文章加载后自动处理。已有 `summary` 字段则直接展示，否则调用 `/agent/summarize` 生成。蓝色边框卡片 + Sparkles 图标 + "AI 生成摘要" 标签。加载中显示 Skeleton，失败时安静隐藏。
+- **相关推荐**：文章底部调用 `/agent/recommend` 获取 3 篇推荐，展示推荐文章卡片。加载中显示 3 张 Skeleton 骨架。AI 失败时自动降级为 tag 匹配数据库查询。
 
 ## 前端设计系统
 
@@ -110,9 +134,11 @@ pnpm dev          # Turborepo 并行启动 web + api
 |---|---|---|
 | Markdown 渲染 | react-markdown + remark-gfm | `apps/web/src/app/articles/[id]/page.tsx` |
 | 代码高亮 | rehype-highlight (github-dark 主题) | `apps/web/src/app/globals.css` |
+| Markdown 编辑器 | @uiw/react-md-editor | `apps/web/src/components/admin/article-editor.tsx` |
 | 图标 | lucide-react | 全局使用 |
-| 动画 | framer-motion + tailwindcss-animate | tailwind.config.ts |
-| 数据请求 | SWR + axios | `apps/web/src/lib/api.ts` |
+| 动画 | framer-motion（页面过渡动画 template.tsx）+ tailwindcss-animate | tailwind.config.ts |
+| 数据请求 | swr + axios | 全局使用 |
+| 测试 | jest + supertest + ts-jest | `apps/api/src/test/` |
 
 ## 目录结构
 
@@ -124,8 +150,22 @@ xizhilanre-blog/
 │   │   │   ├── app/          # App Router 页面路由
 │   │   │   │   ├── globals.css       # 全局样式 + CSS 变量 + 玻璃拟态 + highlight.js
 │   │   │   │   ├── layout.tsx        # 根布局（Navbar + Footer）
-│   │   │   │   ├── page.tsx          # 首页（Hero + 文章卡片 + 无限滚动）
-│   │   │   │   ├── about/page.tsx    # 关于我（技能+时间轴+简历浮层）
+│   │   │   │   ├── template.tsx      # 页面过渡动画（Framer Motion 入场效果）
+│   │   │   │   ├── loading.tsx       # 根路由加载状态
+│   │   │   │   ├── error.tsx         # 根路由错误边界
+│   │   │   │   ├── not-found.tsx     # 404 页面
+│   │   │   │   ├── page.tsx          # 首页（Hero + 文章卡片 + 无限滚动 + 精选项目）
+│   │   │   │   ├── middleware.ts     # 路由保护（/admin/* 需 JWT cookie）
+│   │   │   │   ├── about/page.tsx    # 关于我（技能+时间轴+简历内嵌）
+│   │   │   │   ├── admin/            # 管理后台（/admin）
+│   │   │   │   │   ├── layout.tsx    #   后台布局（侧边栏导航）
+│   │   │   │   │   ├── page.tsx      #   仪表盘（统计 + 最近文章）
+│   │   │   │   │   ├── articles/
+│   │   │   │   │   │   ├── page.tsx  #     文章管理（列表 + 发布/草稿切换）
+│   │   │   │   │   │   ├── new/page.tsx  # 新建文章（MD 编辑器）
+│   │   │   │   │   │   └── [id]/edit/page.tsx  # 编辑文章
+│   │   │   │   │   └── projects/
+│   │   │   │   │       └── page.tsx  #     作品管理（列表 + Modal 表单）
 │   │   │   │   ├── articles/
 │   │   │   │   │   ├── page.tsx      # 文章列表（搜索+标签胶囊+分页+TOC）
 │   │   │   │   │   └── [id]/page.tsx # 文章详情（Markdown+点赞+AI摘要骨架）
@@ -135,7 +175,8 @@ xizhilanre-blog/
 │   │   │   │   ├── ui/               # shadcn/ui 组件（button 等）
 │   │   │   │   ├── layout/           # 布局（Navbar 毛玻璃导航 + Footer）
 │   │   │   │   ├── home/             # 首页（Hero + ArticleCard）
-│   │   │   │   └── articles/         # 文章（TOC 目录导航）
+│   │   │   │   ├── articles/         # 文章（TOC 目录导航）
+│   │   │   │   └── admin/            # 后台（ArticleEditor）
 │   │   │   ├── hooks/        # 自定义 Hooks
 │   │   │   ├── lib/          # 工具函数
 │   │   │   │   ├── api.ts            # 封装所有 API 请求（auth/articles/projects/users）
@@ -149,6 +190,7 @@ xizhilanre-blog/
 │       │   ├── main.ts           # 入口：CORS + ValidationPipe + /api 前缀
 │       │   ├── app.module.ts     # 根模块：ConfigModule + MongooseModule + 5 个子模块
 │       │   ├── app.controller.ts # 根控制器（GET /api、GET /api/health）
+│       │   ├── test/             # Jest 测试（test-utils.ts + auth.spec.ts + articles.spec.ts）
 │       │   ├── common/           # 公共模块（JWT 策略 + Guard）
 │       │   │   ├── jwt.strategy.ts
 │       │   │   └── jwt-auth.guard.ts
@@ -159,6 +201,7 @@ xizhilanre-blog/
 │       │       ├── auth/         # 认证模块（注册/登录 JWT + bcrypt）
 │       │       └── agent/        # AI Agent 模块
 │       ├── dist/             # 构建产物
+│       ├── jest.config.ts     # Jest 配置（ts-jest 转换 + 路径别名）
 │       ├── seed.mjs           # 种子脚本（node apps/api/seed.mjs 执行）
 │       ├── seed-data.json     # 种子数据（8 篇文章 + 5 个项目）
 │       └── nest-cli.json
@@ -213,6 +256,117 @@ xizhilanre-blog/
 | PUT | /api/users/profile | JWT | 修改个人信息（username, avatar, bio） |
 | POST | /api/users/favorites/:articleId | JWT | 收藏文章（$addToSet 去重） |
 | DELETE | /api/users/favorites/:articleId | JWT | 取消收藏 |
+
+### Agent 模块 (agent)
+
+| 方法 | 路径 | 权限 | 说明 |
+|---|---|---|---|
+| POST | /api/agent/summarize | JWT | AI 文章摘要（接收 content，返回 summary，MD5 缓存） |
+| POST | /api/agent/recommend | JWT | AI 文章推荐（接收 articleId+tags，返回3篇推荐文章，AI 失败时降级为 tag 匹配） |
+| POST | /api/agent/write | JWT | AI 文章大纲（接收 title+keywords+style?，返回 Markdown 大纲） |
+
+**频率限制**：每用户每分钟最多 5 次（三个接口共享配额）。  
+**底层模型**：DeepSeek Chat API（OpenAI 兼容协议，`OPENAI_API_KEY` / `OPENAI_API_BASE` 环境变量配置）。  
+**Token 日志**：每次 API 调用自动记录 prompt/completion/total tokens 到 NestJS Logger。
+
+## 后端测试
+
+### 测试框架
+
+使用 Jest + Supertest 进行集成测试，完全模拟 HTTP 请求，不依赖真实 MongoDB。
+
+```bash
+# 运行全部测试
+pnpm --filter @xizhilanre/api test
+
+# Watch 模式
+pnpm --filter @xizhilanre/api test:watch
+
+# 覆盖率报告
+pnpm --filter @xizhilanre/api test:cov
+```
+
+### 测试架构
+
+测试位于 `apps/api/src/test/` 目录：
+
+| 文件 | 说明 |
+|---|---|
+| `test-utils.ts` | 测试基础设施：内存数据库、Mock 模型、Test App 工厂 |
+| `auth.spec.ts` | Auth 模块测试（8 个用例） |
+| `articles.spec.ts` | Articles 模块测试（5 个用例） |
+
+### Mock 策略
+
+绕过 `MongooseModule.forFeature()` 依赖，直接在 `TestingModule` 中注册 Controller/Service + 自定义 Model Provider：
+- 用 `Map` 实现内存数据库（`userDocs` / `articleDocs`）
+- Mock 的 Mongoose Model 方法返回 **thenable 对象**（复刻 Mongoose Query 可直接 await 的行为）
+- `chain()` helper 实现 `.sort().skip().limit().populate().select()` 链式调用
+
+### 测试覆盖
+
+**Auth（8 个用例）**：
+- 注册成功、重复邮箱拒绝（4xx）、缺少字段拒绝（400）、密码过短拒绝（400）、邮箱格式错误拒绝（400）
+- 登录成功（201）、密码错误拒绝（4xx）、不存在的邮箱拒绝（4xx）
+
+**Articles（5 个用例）**：
+- 空列表返回、仅返回已发布文章、分页参数正确、无 JWT 拒绝（4xx）、有效 JWT 创建成功（201）
+
+### 关键修复
+
+`articles.service.ts` 中分页参数防御：
+```typescript
+// ValidationPipe + enableImplicitConversion 会将 undefined 转为 NaN
+// ?? 无法捕获 NaN，必须用 Number.isFinite()
+const page = Number.isFinite(query.page) ? query.page! : 1;
+const limit = Number.isFinite(query.limit) ? query.limit! : 10;
+```
+
+## 前端性能优化
+
+### SWR 数据缓存
+
+前端文章列表从 `useState+useEffect` 迁移到 `useSWR`，享受自动缓存、重验证、去重请求：
+- **用户端** `apps/web/src/app/articles/page.tsx`：使用 `useSWR(['articles', page, tag, search], ...)` + `keepPreviousData: true`，切换页面时保留旧数据避免闪烁
+- **管理后台** `apps/web/src/app/admin/articles/page.tsx`：使用 `useSWR('admin-articles', ...)`，mutation 后调用 `mutate(SWR_KEY)` 刷新列表
+
+### next/image 图片优化
+
+- `apps/web/src/app/projects/page.tsx`：卡片封面图和 Modal 图片改用 `<Image fill>` 替代原生 `<img>`，享受自动 WebP 转换、懒加载、尺寸优化
+- `next.config.mjs` 已配置 `remotePatterns: [{ protocol: 'https', hostname: '**' }]` 允许远程图片
+
+### MongoDB 索引
+
+`apps/api/src/modules/articles/articles.schema.ts`：
+- 单字段索引：`author`、`tags`、`published`
+- 复合索引：`{ createdAt: -1 }`（按时间倒序）、`{ published: 1, createdAt: -1 }`（已发布文章按时间排序）
+
+`apps/api/src/modules/projects/projects.schema.ts`：
+- 单字段索引：`featured`
+- 复合索引：`{ featured: 1, createdAt: -1 }`
+
+## 前端 UI 完善
+
+### 加载与错误状态
+
+为所有主要路由添加了 Next.js 约定文件：
+
+| 文件 | 说明 |
+|---|---|
+| `apps/web/src/app/loading.tsx` | 根路由加载动画（旋转边框 + "加载中..."） |
+| `apps/web/src/app/error.tsx` | 根路由错误边界（错误信息 + 重试按钮） |
+| `apps/web/src/app/not-found.tsx` | 404 页面（大号 404 + 返回首页链接） |
+| `apps/web/src/app/articles/loading.tsx` | 文章列表骨架屏（6 张卡片 shimmer） |
+| `apps/web/src/app/projects/loading.tsx` | 作品集骨架屏（6 张卡片 shimmer） |
+| `apps/web/src/app/admin/loading.tsx` | 管理后台加载动画 |
+| `apps/web/src/app/admin/error.tsx` | 管理后台错误边界 |
+
+### 页面过渡动画
+
+`apps/web/src/app/template.tsx` — Next.js template 在每次路由切换时重新渲染，配合 Framer Motion 实现：
+- 入场：`opacity: 0→1, y: 16→0`，duration 0.35s，ease `[0.25, 0.1, 0.25, 1]`
+
+> **注意**：`template.tsx` 替代了 `layout.tsx` 的角色来包裹页面内容，因为 layout 在路由切换时不会重新挂载，而 template 每次都会触发动画。
 
 ## 常用命令
 
@@ -288,24 +442,39 @@ turbo dev --filter=@xizhilanre/web  # 只启动 web 开发服务器
 ### 添加新页面（web）
 
 1. 在 `apps/web/src/app/` 下创建路由文件夹（如 `apps/web/src/app/articles/`）
-2. 创建 `page.tsx`、`layout.tsx`（可选）、`loading.tsx`（可选）
-3. 前端组件必须包含 **加载状态** 和 **错误状态**
+2. 创建 `page.tsx`、`layout.tsx`（可选）、`loading.tsx`（骨架屏或 spinner）、`error.tsx`（错误边界 + 重试按钮）
+3. 前端组件必须包含 **加载状态** 和 **错误状态**，数据获取优先使用 SWR
 4. 遵循 Apple-esque 设计规范：使用 `glass-card`、`font-serif`、`transition-all duration-300`
+5. 页面过渡动画由 `template.tsx` 统一处理（Framer Motion），无需在单独页面中处理
+   - `template.tsx` 在每次路由切换时重新渲染，`layout.tsx` 不会 — 因此动画逻辑放在 template 中
 
 ```
 src/app/
-├── layout.tsx        # 根布局
-├── page.tsx          # 首页 /
+├── layout.tsx          # 根布局
+├── page.tsx            # 首页 /
+├── middleware.ts       # 路由保护（/admin/* 需登录）
 ├── articles/
-│   ├── page.tsx      # /articles
+│   ├── page.tsx        # /articles
 │   └── [id]/
-│       └── page.tsx  # /articles/:id
+│       └── page.tsx    # /articles/:id
 ├── projects/
-│   └── page.tsx      # /projects
+│   └── page.tsx        # /projects
 ├── about/
-│   └── page.tsx      # /about
-└── login/
-    └── page.tsx      # /login
+│   └── page.tsx        # /about
+├── login/
+│   └── page.tsx        # /login
+└── admin/
+    ├── layout.tsx      # 后台布局（侧边栏）
+    ├── page.tsx        # /admin（仪表盘）
+    ├── articles/
+    │   ├── page.tsx    # /admin/articles（列表）
+    │   ├── new/
+    │   │   └── page.tsx   # /admin/articles/new
+    │   └── [id]/
+    │       └── edit/
+    │           └── page.tsx  # /admin/articles/:id/edit
+    └── projects/
+        └── page.tsx    # /admin/projects
 ```
 
 ### 添加 API 模块（api）
@@ -364,20 +533,31 @@ shadcn/ui 当前配置：
 
 ### AI Agent 集成
 
+三个接口均需 JWT 认证，前端通过 `lib/api.ts` 的 axios 实例自动附加 token。
+
 ```ts
-import { chat, summarize, createAIClient } from '@xizhilanre/ai-agent';
-
-// 聊天
-const reply = await chat([
-  { role: 'user', content: '你好' }
-]);
-
 // 生成摘要
-const summary = await summarize(articleContent);
+const res = await api.post('/agent/summarize', { content: articleContent });
+const summary = res.data.data.summary;
 
-// 自定义客户端
-const client = createAIClient();
+// 生成文章大纲
+const res = await api.post('/agent/write', {
+  title: '我的文章标题',
+  keywords: ['React', 'TypeScript'],
+  style: '技术实战风格',     // 可选
+});
+const outline = res.data.data.outline;
+
+// 推荐文章
+const res = await api.post('/agent/recommend', {
+  articleId: '当前文章ID',
+  tags: ['React', 'Frontend'],
+});
+const recs = res.data.data.recommendations;
+// recs: [{ id, title, summary }]
 ```
+
+管理后台文章编辑器中的"AI 摘要"按钮即调用 `/agent/summarize`，失败时自动回退为前端文本截取。
 
 ## 环境变量
 
@@ -419,9 +599,13 @@ test:   build → test
 ### 前端 API 调用规范
 
 - 所有请求通过 `lib/api.ts` 中的封装函数发送，不要直接使用 axios
+- 数据获取优先使用 SWR（`useSWR`），自动缓存 + 重验证 + 去重请求
+- 写操作后调用 `mutate(key)` 刷新相关缓存
 - Token 存储在 `localStorage('token')`，请求拦截器自动附加
-- 页面组件先显示 `loading` 状态（`Loader2` 旋转图标），再渲染数据
+- 登录时间时写入 cookie `token`（middleware 依赖 cookie 保护 `/admin/*` 路由）
+- 页面组件先显示 `loading` 状态（骨架屏或 `Loader2` 旋转图标），再渲染数据
 - 空数据状态必须给出提示（"还没有文章" / "暂无作品"）
+- 导航栏根据 `localStorage` 中是否有 token 显示"登录"或"管理后台"按钮
 
 ### pnpm 命令不可用
 

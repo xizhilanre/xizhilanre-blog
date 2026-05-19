@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { ExternalLink, Github, X, Loader2, Tag } from 'lucide-react';
 import { getProjects } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -109,12 +110,14 @@ function ProjectCard({ project, onClick }: { project: any; onClick: () => void }
 
       <div className="relative">
         {/* Media placeholder */}
-        <div className="mb-4 flex h-36 items-center justify-center rounded-xl bg-secondary/50 text-4xl">
+        <div className="relative mb-4 flex h-36 items-center justify-center overflow-hidden rounded-xl bg-secondary/50 text-4xl">
           {project.media && project.media[0] ? (
-            <img
+            <Image
               src={project.media[0]}
               alt={project.title}
-              className="h-full w-full rounded-xl object-cover"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="rounded-xl object-cover"
             />
           ) : (
             <span className="font-serif text-muted-foreground/30">
@@ -211,12 +214,15 @@ function ProjectModal({ project, onClose }: { project: any; onClose: () => void 
         <div className="max-h-[70vh] overflow-y-auto p-6">
           {/* Media */}
           {project.media && project.media[0] && (
-            <img
-              src={project.media[0]}
-              alt={project.title}
-              className="mb-6 w-full rounded-xl object-cover"
-              style={{ maxHeight: '320px' }}
-            />
+            <div className="relative mb-6 h-80 w-full overflow-hidden rounded-xl">
+              <Image
+                src={project.media[0]}
+                alt={project.title}
+                fill
+                sizes="100vw"
+                className="object-cover"
+              />
+            </div>
           )}
 
           {project.description && (

@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: xizhilanre-api
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: pnpm install --frozen-lockfile && pnpm turbo build --filter=@xizhilanre/api
+    startCommand: node apps/api/dist/main.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_API_BASE
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: PORT
+        value: "3001"

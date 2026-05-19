@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
+import useSWR from 'swr';
 import { Search, Loader2, Tag } from 'lucide-react';
 import { getArticles } from '@/lib/api';
 import ArticleCard from '@/components/home/article-card';
@@ -12,30 +13,20 @@ const ALL_TAGS = [
 ];
 
 export default function ArticlesPage() {
-  const [articles, setArticles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTag, setActiveTag] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const fetchArticles = useCallback(async (p: number, tag: string, q: string) => {
-    setLoading(true);
-    try {
-      const res = await getArticles({ page: p, limit: 9, tag: tag || undefined, search: q || undefined });
-      setArticles(res.data?.items ?? []);
-      setTotalPages(res.data?.totalPages ?? 0);
-    } catch {
-      // silently fail
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const swrKey = ['articles', page, activeTag || undefined, search || undefined];
+  const { data, isLoading } = useSWR(
+    swrKey,
+    () => getArticles({ page, limit: 9, tag: activeTag || undefined, search: search || undefined }),
+    { keepPreviousData: true },
+  );
 
-  useEffect(() => {
-    fetchArticles(page, activeTag, search);
-  }, [page, activeTag, search, fetchArticles]);
+  const articles = data?.data?.items ?? [];
+  const totalPages = data?.data?.totalPages ?? 0;
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -46,11 +37,7 @@ export default function ArticlesPage() {
   };
 
   const handleTagClick = (tag: string) => {
-    if (activeTag === tag) {
-      setActiveTag('');
-    } else {
-      setActiveTag(tag);
-    }
+    setActiveTag(activeTag === tag ? '' : tag);
     setPage(1);
   };
 
@@ -96,14 +83,14 @@ export default function ArticlesPage() {
       </div>
 
       {/* Article grid */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-24">
           <Loader2 className="animate-spin text-muted-foreground" size={32} />
         </div>
       ) : articles.length > 0 ? (
         <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {articles.map((article, i) => (
+            {articles.map((article: any, i: number) => (
               <div
                 key={article._id}
                 className="animate-fade-in"

@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import { Heart, Eye, Calendar, Clock, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
-import { getArticle, likeArticle, getArticles } from '@/lib/api';
+import { getArticle, likeArticle, getArticles, agentSummarize, agentRecommend } from '@/lib/api';
 import TableOfContents from '@/components/articles/toc';
 import { cn } from '@/lib/utils';
 
@@ -23,23 +23,48 @@ export default function ArticleDetailPage() {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [related, setRelated] = useState<any[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+  const [aiSummary, setAiSummary] = useState('');
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    setAiSummary('');
+    setRelated([]);
     getArticle(id)
       .then((res) => {
         setArticle(res.data);
         setLikeCount(res.data?.likeCount ?? 0);
-        // Fetch related articles by first tag
-        const tag = res.data?.tags?.[0];
-        if (tag) {
-          getArticles({ tag, limit: 3 }).then((r) => {
-            const items = (r.data?.items ?? []).filter(
-              (a: any) => a._id !== id,
-            ).slice(0, 3);
-            setRelated(items);
-          });
+
+        // AI summary: use stored summary if exists, otherwise call agent
+        if (res.data?.summary) {
+          setAiSummary(res.data.summary);
+        } else if (res.data?.content) {
+          setAiSummaryLoading(true);
+          agentSummarize(res.data.content.slice(0, 3000))
+            .then((r) => {
+              if (r.data?.summary) setAiSummary(r.data.summary);
+            })
+            .catch(() => {})
+            .finally(() => setAiSummaryLoading(false));
+        }
+
+        // AI recommendations
+        const tags = res.data?.tags ?? [];
+        if (tags.length > 0) {
+          setRelatedLoading(true);
+          agentRecommend(id, tags)
+            .then((r) => setRelated(r.data?.recommendations ?? []))
+            .catch(() => {
+              // Fallback: tag-based search
+              getArticles({ tag: tags[0], limit: 3 }).then((r2) => {
+                setRelated(
+                  (r2.data?.items ?? []).filter((a: any) => a._id !== id).slice(0, 3),
+                );
+              });
+            })
+            .finally(() => setRelatedLoading(false));
         }
       })
       .catch(() => {})
@@ -189,39 +214,63 @@ export default function ArticleDetailPage() {
             </button>
           </div>
 
-          {/* AI Summary skeleton */}
-          <div className="mt-8 glass-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Sparkles size={18} className="text-primary/60" />
-              <h3 className="font-serif text-lg font-semibold">AI 摘要</h3>
+          {/* AI Summary */}
+          {(aiSummary || aiSummaryLoading) && (
+            <div className="mt-8 rounded-2xl border border-blue-400/20 bg-blue-400/5 p-6">
+              <div className="mb-3 flex items-center gap-2">
+                <Sparkles size={16} className="text-blue-400" />
+                <span className="text-xs font-medium text-blue-400/80">
+                  AI 生成摘要
+                </span>
+              </div>
+              {aiSummaryLoading ? (
+                <div className="space-y-2">
+                  <div className="h-3 w-full animate-pulse rounded-full bg-blue-400/10" />
+                  <div className="h-3 w-5/6 animate-pulse rounded-full bg-blue-400/10" />
+                  <div className="h-3 w-4/6 animate-pulse rounded-full bg-blue-400/10" />
+                </div>
+              ) : (
+                <p className="text-sm leading-relaxed text-foreground/80">
+                  {aiSummary}
+                </p>
+              )}
             </div>
-            <div className="space-y-2">
-              <div className="h-3 w-full animate-pulse rounded-full bg-secondary" />
-              <div className="h-3 w-5/6 animate-pulse rounded-full bg-secondary" />
-              <div className="h-3 w-4/6 animate-pulse rounded-full bg-secondary" />
-            </div>
-          </div>
+          )}
 
           {/* Related articles */}
-          {related.length > 0 && (
+          {(related.length > 0 || relatedLoading) && (
             <div className="mt-12">
               <h3 className="mb-6 font-serif text-xl font-semibold">相关文章</h3>
-              <div className="grid gap-4 sm:grid-cols-3">
-                {related.map((a: any) => (
-                  <Link key={a._id} href={`/articles/${a._id}`}>
-                    <div className="glass-card p-4 transition-all duration-300 hover:-translate-y-1">
-                      <h4 className="font-serif text-sm font-semibold line-clamp-2">
-                        {a.title}
-                      </h4>
-                      {a.summary && (
-                        <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
-                          {a.summary}
-                        </p>
-                      )}
+              {relatedLoading ? (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="glass-card p-4">
+                      <div className="h-4 w-3/4 animate-pulse rounded-full bg-secondary" />
+                      <div className="mt-3 space-y-1.5">
+                        <div className="h-2.5 w-full animate-pulse rounded-full bg-secondary" />
+                        <div className="h-2.5 w-2/3 animate-pulse rounded-full bg-secondary" />
+                      </div>
                     </div>
-                  </Link>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {related.map((a: any) => (
+                    <Link key={a.id ?? a._id} href={`/articles/${a.id ?? a._id}`}>
+                      <div className="glass-card p-4 transition-all duration-300 hover:-translate-y-1">
+                        <h4 className="font-serif text-sm font-semibold line-clamp-2">
+                          {a.title}
+                        </h4>
+                        {a.summary && (
+                          <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
+                            {a.summary}
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </article>

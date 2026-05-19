@@ -20,7 +20,8 @@ export default function LoginPage() {
     try {
       const res = await login({ email, password });
       localStorage.setItem('token', res.data.token);
-      router.push('/');
+      document.cookie = `token=${res.data.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      router.push('/admin');
     } catch (err: any) {
       setError(err.message ?? '登录失败');
     } finally {
@@ -44,7 +45,7 @@ export default function LoginPage() {
           欢迎回来，请登录你的账号
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5" autoComplete="off">
           <div className="glass-card flex items-center gap-3 px-4 py-3">
             <Mail size={18} className="text-muted-foreground" />
             <input
@@ -53,6 +54,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="off"
               className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
             />
           </div>
@@ -65,6 +67,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="new-password"
               className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
             />
           </div>

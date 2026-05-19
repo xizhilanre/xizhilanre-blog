@@ -23,8 +23,10 @@ export class Project {
   @Prop()
   demoLink?: string;
 
-  @Prop({ default: false })
+  @Prop({ default: false, index: true })
   featured: boolean;
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);
+
+ProjectSchema.index({ featured: 1, createdAt: -1 });

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Menu, X, LogIn } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Menu, X, LogIn, LayoutDashboard, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const links = [
@@ -15,7 +15,27 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    const check = () => setLoggedIn(!!localStorage.getItem('token'));
+    check();
+    window.addEventListener('focus', check);
+    return () => window.removeEventListener('focus', check);
+  }, []);
+
+  useEffect(() => {
+    setLoggedIn(!!localStorage.getItem('token'));
+  }, [pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    document.cookie = 'token=; path=/; max-age=0';
+    setLoggedIn(false);
+    router.push('/');
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -65,13 +85,31 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-1.5 text-sm font-medium text-foreground/80 transition-all duration-300 hover:border-primary/40 hover:text-primary hover:shadow-[0_0_20px_rgba(139,125,255,0.15)]"
-          >
-            <LogIn size={14} />
-            登录
-          </Link>
+          {loggedIn ? (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-2 rounded-full border border-primary/30 px-4 py-1.5 text-sm font-medium text-primary transition-all duration-300 hover:border-primary/60 hover:shadow-[0_0_20px_rgba(139,125,255,0.15)]"
+              >
+                <LayoutDashboard size={14} />
+                管理后台
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-300 hover:border-red-500/30 hover:text-red-400"
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-1.5 text-sm font-medium text-foreground/80 transition-all duration-300 hover:border-primary/40 hover:text-primary hover:shadow-[0_0_20px_rgba(139,125,255,0.15)]"
+            >
+              <LogIn size={14} />
+              登录
+            </Link>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -107,13 +145,32 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/login"
-            className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 px-6 py-2.5 text-lg font-medium transition-all hover:border-primary/40 hover:text-primary"
-          >
-            <LogIn size={16} />
-            登录
-          </Link>
+          {loggedIn ? (
+            <div className="mt-4 flex flex-col items-center gap-4">
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-2 rounded-full border border-primary/30 px-6 py-2.5 text-lg font-medium text-primary transition-all hover:border-primary/60"
+              >
+                <LayoutDashboard size={16} />
+                管理后台
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-2 rounded-full border border-white/10 px-6 py-2.5 text-lg font-medium text-muted-foreground transition-all hover:border-red-500/30 hover:text-red-400"
+              >
+                <LogOut size={16} />
+                退出登录
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 px-6 py-2.5 text-lg font-medium transition-all hover:border-primary/40 hover:text-primary"
+            >
+              <LogIn size={16} />
+              登录
+            </Link>
+          )}
         </div>
       </div>
     </header>

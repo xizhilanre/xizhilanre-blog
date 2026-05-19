@@ -14,13 +14,13 @@ export class Article {
   @Prop()
   summary?: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   author: Types.ObjectId;
 
-  @Prop({ type: [String], default: [] })
+  @Prop({ type: [String], default: [], index: true })
   tags: string[];
 
-  @Prop({ default: false })
+  @Prop({ default: false, index: true })
   published: boolean;
 
   @Prop({ default: 0 })
@@ -31,3 +31,6 @@ export class Article {
 }
 
 export const ArticleSchema = SchemaFactory.createForClass(Article);
+
+ArticleSchema.index({ createdAt: -1 });
+ArticleSchema.index({ published: 1, createdAt: -1 });
