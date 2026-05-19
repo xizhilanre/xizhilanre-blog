@@ -5,17 +5,18 @@ import Link from 'next/link';
 import { FileText, FolderKanban, Eye, ThumbsUp, Plus } from 'lucide-react';
 import { getArticles, getProjects } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import type { ArticleDoc } from '@/types';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ articles: 0, projects: 0, views: 0, likes: 0 });
-  const [recentArticles, setRecentArticles] = useState<any[]>([]);
+  const [recentArticles, setRecentArticles] = useState<ArticleDoc[]>([]);
 
   useEffect(() => {
     Promise.all([getArticles({ limit: 5 }), getProjects()])
       .then(([aRes, pRes]) => {
         const items = aRes.data?.items ?? [];
-        const totalViews = items.reduce((s: number, a: any) => s + (a.viewCount ?? 0), 0);
-        const totalLikes = items.reduce((s: number, a: any) => s + (a.likeCount ?? 0), 0);
+        const totalViews = items.reduce((s: number, a: ArticleDoc) => s + (a.viewCount ?? 0), 0);
+        const totalLikes = items.reduce((s: number, a: ArticleDoc) => s + (a.likeCount ?? 0), 0);
         setStats({
           articles: aRes.data?.total ?? items.length,
           projects: (pRes.data ?? []).length,

@@ -10,6 +10,7 @@ import { Heart, Eye, Calendar, Clock, ArrowLeft, Loader2, Sparkles } from 'lucid
 import { getArticle, likeArticle, getArticles, agentSummarize, agentRecommend } from '@/lib/api';
 import TableOfContents from '@/components/articles/toc';
 import { cn } from '@/lib/utils';
+import type { ArticleDoc, RelatedArticle } from '@/types';
 
 function estimateReadTime(content: string): number {
   const words = content.length;
@@ -18,11 +19,11 @@ function estimateReadTime(content: string): number {
 
 export default function ArticleDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [article, setArticle] = useState<any>(null);
+  const [article, setArticle] = useState<ArticleDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-  const [related, setRelated] = useState<any[]>([]);
+  const [related, setRelated] = useState<RelatedArticle[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false);
@@ -60,7 +61,7 @@ export default function ArticleDetailPage() {
               // Fallback: tag-based search
               getArticles({ tag: tags[0], limit: 3 }).then((r2) => {
                 setRelated(
-                  (r2.data?.items ?? []).filter((a: any) => a._id !== id).slice(0, 3),
+                  (r2.data?.items ?? []).filter((a: ArticleDoc) => a._id !== id).slice(0, 3),
                 );
               });
             })
@@ -146,7 +147,7 @@ export default function ArticleDetailPage() {
             </h1>
 
             <div className="mt-6 flex flex-wrap items-center gap-5 text-sm text-muted-foreground">
-              {article.author?.username && (
+              {article.author && typeof article.author !== 'string' && article.author.username && (
                 <span className="font-medium text-foreground/80">
                   {article.author.username}
                 </span>
@@ -255,7 +256,7 @@ export default function ArticleDetailPage() {
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-3">
-                  {related.map((a: any) => (
+                  {related.map((a) => (
                     <Link key={a.id ?? a._id} href={`/articles/${a.id ?? a._id}`}>
                       <div className="glass-card p-4 transition-all duration-300 hover:-translate-y-1">
                         <h4 className="font-serif text-sm font-semibold line-clamp-2">

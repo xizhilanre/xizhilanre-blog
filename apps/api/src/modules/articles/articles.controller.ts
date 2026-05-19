@@ -8,10 +8,14 @@ import {
   Param,
   Query,
   UseGuards,
-  Request,
+  Req,
 } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { JwtAuthGuard } from '../../common/jwt-auth.guard';
+
+interface JwtRequest {
+  user: { id: string; email: string };
+}
 
 @Controller('articles')
 export class ArticlesController {
@@ -40,7 +44,7 @@ export class ArticlesController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() body: any, @Request() req: any) {
+  create(@Body() body: any, @Req() req: JwtRequest) {
     return this.articlesService
       .create({ ...body, author: req.user.id })
       .then((data) => ({
@@ -52,7 +56,11 @@ export class ArticlesController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  update(@Param('id') id: string, @Body() body: any, @Request() req: any) {
+  update(
+    @Param('id') id: string,
+    @Body() body: any,
+    @Req() req: JwtRequest,
+  ) {
     return this.articlesService
       .update(id, req.user.id, body)
       .then((data) => ({
@@ -64,7 +72,7 @@ export class ArticlesController {
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  delete(@Param('id') id: string, @Request() req: any) {
+  delete(@Param('id') id: string, @Req() req: JwtRequest) {
     return this.articlesService.delete(id, req.user.id).then(() => ({
       success: true,
       message: '文章已删除',

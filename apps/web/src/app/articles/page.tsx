@@ -6,6 +6,7 @@ import { Search, Loader2, Tag } from 'lucide-react';
 import { getArticles } from '@/lib/api';
 import ArticleCard from '@/components/home/article-card';
 import { cn } from '@/lib/utils';
+import type { ArticleDoc } from '@/types';
 
 const ALL_TAGS = [
   'React', 'Next.js', 'TypeScript', 'Node.js', 'NestJS',
@@ -90,7 +91,7 @@ export default function ArticlesPage() {
       ) : articles.length > 0 ? (
         <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {articles.map((article: any, i: number) => (
+            {articles.map((article: ArticleDoc, i: number) => (
               <div
                 key={article._id}
                 className="animate-fade-in"

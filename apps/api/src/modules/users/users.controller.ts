@@ -7,10 +7,14 @@ import {
   Body,
   Param,
   UseGuards,
-  Request,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../../common/jwt-auth.guard';
+
+interface JwtRequest {
+  user: { id: string; email: string };
+}
 
 @Controller('users')
 export class UsersController {
@@ -26,7 +30,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Put('profile')
-  updateProfile(@Body() body: any, @Request() req: any) {
+  updateProfile(@Body() body: any, @Req() req: JwtRequest) {
     return this.usersService
       .updateProfile(req.user.id, body)
       .then((data) => ({
@@ -40,7 +44,7 @@ export class UsersController {
   @Post('favorites/:articleId')
   addFavorite(
     @Param('articleId') articleId: string,
-    @Request() req: any,
+    @Req() req: JwtRequest,
   ) {
     return this.usersService
       .addFavorite(req.user.id, articleId)
@@ -55,7 +59,7 @@ export class UsersController {
   @Delete('favorites/:articleId')
   removeFavorite(
     @Param('articleId') articleId: string,
-    @Request() req: any,
+    @Req() req: JwtRequest,
   ) {
     return this.usersService
       .removeFavorite(req.user.id, articleId)

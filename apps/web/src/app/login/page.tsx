@@ -22,8 +22,8 @@ export default function LoginPage() {
       localStorage.setItem('token', res.data.token);
       document.cookie = `token=${res.data.token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       router.push('/admin');
-    } catch (err: any) {
-      setError(err.message ?? '登录失败');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : '登录失败');
     } finally {
       setLoading(false);
     }

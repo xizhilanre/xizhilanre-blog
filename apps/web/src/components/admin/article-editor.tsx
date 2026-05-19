@@ -61,8 +61,8 @@ export default function ArticleEditor({ id }: ArticleEditorProps) {
         router.replace(`/admin/articles/${newId}/edit`);
       }
       setPublished(publish);
-    } catch (err: any) {
-      setError(err.message ?? '保存失败');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : '保存失败');
     } finally {
       setSaving(false);
     }

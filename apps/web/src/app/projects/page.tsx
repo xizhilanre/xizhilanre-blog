@@ -5,14 +5,15 @@ import Image from 'next/image';
 import { ExternalLink, Github, X, Loader2, Tag } from 'lucide-react';
 import { getProjects } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import type { ProjectDoc } from '@/types';
 
 const TECH_OPTIONS = ['React', 'Next.js', 'NestJS', 'TypeScript', 'Python', 'FastAPI', 'MongoDB', 'Node.js'];
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<ProjectDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTech, setActiveTech] = useState('');
-  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [selectedProject, setSelectedProject] = useState<ProjectDoc | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -99,7 +100,7 @@ export default function ProjectsPage() {
   );
 }
 
-function ProjectCard({ project, onClick }: { project: any; onClick: () => void }) {
+function ProjectCard({ project, onClick }: { project: ProjectDoc; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
@@ -161,7 +162,7 @@ function ProjectCard({ project, onClick }: { project: any; onClick: () => void }
   );
 }
 
-function ProjectModal({ project, onClose }: { project: any; onClose: () => void }) {
+function ProjectModal({ project, onClose }: { project: ProjectDoc; onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();

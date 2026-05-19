@@ -6,14 +6,15 @@ import Link from 'next/link';
 import Hero from '@/components/home/hero';
 import ArticleCard from '@/components/home/article-card';
 import { getArticles, getProjects } from '@/lib/api';
+import type { ArticleDoc, ProjectDoc } from '@/types';
 
 export default function HomePage() {
-  const [articles, setArticles] = useState<any[]>([]);
+  const [articles, setArticles] = useState<ArticleDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<ProjectDoc[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
 
   const fetchArticles = useCallback(async (p: number) => {
@@ -41,7 +42,7 @@ export default function HomePage() {
 
   useEffect(() => {
     getProjects()
-      .then((res) => setProjects((res.data ?? []).filter((p: any) => p.featured)))
+      .then((res) => setProjects((res.data ?? []).filter((p: ProjectDoc) => p.featured)))
       .catch(() => {})
       .finally(() => setProjectsLoading(false));
   }, []);

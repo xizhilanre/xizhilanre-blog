@@ -1,17 +1,9 @@
 import Link from 'next/link';
 import { Calendar, Eye } from 'lucide-react';
+import type { ArticleDoc } from '@/types';
 
 interface ArticleCardProps {
-  article: {
-    _id: string;
-    title: string;
-    summary?: string;
-    tags?: string[];
-    viewCount?: number;
-    likeCount?: number;
-    createdAt?: string;
-    author?: { username?: string; avatar?: string };
-  };
+  article: ArticleDoc;
 }
 
 export default function ArticleCard({ article }: ArticleCardProps) {
@@ -54,7 +46,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
 
         {/* Meta */}
         <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground/60">
-          {article.author?.username && (
+          {article.author && typeof article.author !== 'string' && article.author.username && (
             <span>{article.author.username}</span>
           )}
           {date && (

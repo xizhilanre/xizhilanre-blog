@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Trash2, Loader2, ExternalLink, Github, Star } from 'lucide-react';
 import { getProjects, createProject, updateProject, deleteProject } from '@/lib/api';
+import type { ProjectDoc } from '@/types';
 
 interface ProjectForm {
   _id?: string;
@@ -24,7 +25,7 @@ const emptyForm: ProjectForm = {
 };
 
 export default function AdminProjectsPage() {
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<ProjectDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<ProjectForm>(emptyForm);
@@ -48,7 +49,7 @@ export default function AdminProjectsPage() {
     setShowForm(true);
   };
 
-  const openEdit = (p: any) => {
+  const openEdit = (p: ProjectDoc) => {
     setForm({
       _id: p._id,
       title: p.title ?? '',
@@ -91,8 +92,8 @@ export default function AdminProjectsPage() {
       }
       setShowForm(false);
       fetchProjects();
-    } catch (err: any) {
-      setError(err.message ?? '保存失败');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : '保存失败');
     } finally {
       setSaving(false);
     }

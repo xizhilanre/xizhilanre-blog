@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Plus, Pencil, Trash2, Eye, Loader2 } from 'lucide-react';
 import { getArticles, deleteArticle, updateArticle } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import type { ArticleDoc } from '@/types';
 
 const SWR_KEY = 'admin-articles';
 
@@ -73,7 +74,7 @@ export default function AdminArticlesPage() {
                 </tr>
               </thead>
               <tbody>
-                {articles.map((a: any) => (
+                {articles.map((a: ArticleDoc) => (
                   <tr key={a._id} className="border-b border-white/[0.02] hover:bg-secondary/30">
                     <td className="px-6 py-4">
                       <Link
